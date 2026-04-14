@@ -44,6 +44,11 @@ export const Route = createRootRoute({
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  // In Cloudflare Worker (SSR), `document` is undefined — render the full HTML shell.
+  // In the browser (SPA / Netlify), index.html already provides the shell — just pass through.
+  if (typeof document !== 'undefined') {
+    return <>{children}</>;
+  }
   return (
     <html lang="fr">
       <head>

@@ -16,25 +16,26 @@ export const Route = createFileRoute('/settings')({
 });
 
 function SettingsPage() {
-  const [settings, setSettings] = useState<Settings>({
-    aiProvider: 'openai',
-    apiKey: '',
-    voiceSpeed: 1,
-    voiceName: '',
-    model: 'gpt-4o',
-  });
-  const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || '');
+  // Guard: should never run outside a browser, but protects against SSR/edge contexts.
+  if (typeof window === 'undefined') return null;
+
+  const [voiceSpeed, setVoiceSpeed] = useState(1);
+  const [voiceName, setVoiceName] = useState('');
+  const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') ?? '');
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    getSettings().then(s => {
-      setSettings(s);
-      // localStorage is authoritative for the API key; only fall back to IDB if localStorage is empty
+    getSettings().then((s: Settings) => {
+      // Merge with safe fallbacks in case IDB stored an older schema
+      setVoiceSpeed(typeof s.voiceSpeed === 'number' ? s.voiceSpeed : 1);
+      setVoiceName(s.voiceName ?? '');
+      // localStorage is authoritative for the API key
       if (!localStorage.getItem('apiKey') && s.apiKey) {
         setApiKey(s.apiKey);
       }
     });
+
     const loadVoices = () => setVoices(getAvailableVoices());
     loadVoices();
     window.speechSynthesis?.addEventListener('voiceschanged', loadVoices);
@@ -42,15 +43,15 @@ function SettingsPage() {
   }, []);
 
   const handleSave = async () => {
-    const merged = { ...settings, apiKey };
-    await saveSettings(merged);
+    const current = await getSettings();
+    await saveSettings({ ...current, apiKey, voiceSpeed, voiceName });
     localStorage.setItem('apiKey', apiKey);
     console.log('API key saved:', localStorage.getItem('apiKey'));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const update = (patch: Partial<Settings>) => setSettings(prev => ({ ...prev, ...patch }));
+  const inputCls = 'w-full px-3 py-2 border border-input rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring';
 
   return (
     <div className="flex flex-col h-[calc(100dvh-64px)]">
@@ -59,70 +60,35 @@ function SettingsPage() {
       </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium text-foreground">Fournisseur AI</h2>
-          <div className="space-y-2">
-            {(['openai', 'anthropic', 'custom'] as const).map(provider => (
-              <label key={provider} className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="radio"
-                  name="provider"
-                  checked={settings.aiProvider === provider}
-                  onChange={() => update({ aiProvider: provider })}
-                  className="accent-primary"
-                />
-                <span className="text-foreground capitalize">{provider === 'custom' ? 'URL personnalisée' : provider === 'openai' ? 'OpenAI' : 'Anthropic'}</span>
-              </label>
-            ))}
-          </div>
-        </section>
 
-        {settings.aiProvider === 'custom' && (
-          <section className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">URL de l'API</label>
-            <input
-              type="url"
-              value={settings.customUrl || ''}
-              onChange={e => update({ customUrl: e.target.value })}
-              className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="https://api.example.com/v1/chat/completions"
-            />
-          </section>
-        )}
-
+        {/* Gemini API key */}
         <section className="space-y-2">
-          <label className="block text-sm font-medium text-foreground">Clé API</label>
+          <label className="block text-sm font-medium text-foreground">Clé API Gemini</label>
           <input
             type="password"
             value={apiKey}
             onChange={e => setApiKey(e.target.value)}
-            className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            placeholder="sk-..."
+            className={inputCls}
+            placeholder="AIza..."
+            autoComplete="off"
           />
+          <p className="text-xs text-muted-foreground">
+            Obtenez votre clé sur <span className="font-medium">aistudio.google.com</span>
+          </p>
         </section>
 
-        <section className="space-y-2">
-          <label className="block text-sm font-medium text-foreground">Modèle</label>
-          <input
-            type="text"
-            value={settings.model}
-            onChange={e => update({ model: e.target.value })}
-            className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            placeholder="gpt-4o"
-          />
-        </section>
-
+        {/* Voice speed */}
         <section className="space-y-2">
           <label className="block text-sm font-medium text-foreground">
-            Vitesse de la voix: {settings.voiceSpeed.toFixed(1)}x
+            Vitesse de la voix : {voiceSpeed.toFixed(1)}x
           </label>
           <input
             type="range"
             min="0.5"
             max="2"
             step="0.1"
-            value={settings.voiceSpeed}
-            onChange={e => update({ voiceSpeed: parseFloat(e.target.value) })}
+            value={voiceSpeed}
+            onChange={e => setVoiceSpeed(parseFloat(e.target.value))}
             className="w-full accent-primary"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
@@ -131,19 +97,21 @@ function SettingsPage() {
           </div>
         </section>
 
+        {/* Voice selection */}
         <section className="space-y-2">
-          <label className="block text-sm font-medium text-foreground">Voix</label>
+          <label className="block text-sm font-medium text-foreground">Voix de synthèse</label>
           <select
-            value={settings.voiceName}
-            onChange={e => update({ voiceName: e.target.value })}
-            className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            value={voiceName}
+            onChange={e => setVoiceName(e.target.value)}
+            className={inputCls}
           >
-            <option value="">Par défaut</option>
+            <option value="">Par défaut (première voix française)</option>
             {voices.map(v => (
               <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
             ))}
           </select>
         </section>
+
       </div>
 
       <div className="px-4 py-3 border-t border-border">
