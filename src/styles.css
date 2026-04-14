@@ -1,0 +1,146 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-bubble-user: var(--bubble-user);
+  --color-bubble-assistant: var(--bubble-assistant);
+  --color-bubble-assistant-border: var(--bubble-assistant-border);
+  --color-nav-bg: var(--nav-bg);
+  --color-nav-active: var(--nav-active);
+  --color-nav-inactive: var(--nav-inactive);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.13 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.13 0 0);
+  --primary: oklch(0.55 0.22 260);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0.005 260);
+  --secondary-foreground: oklch(0.13 0 0);
+  --muted: oklch(0.96 0.005 260);
+  --muted-foreground: oklch(0.55 0 0);
+  --accent: oklch(0.96 0.005 260);
+  --accent-foreground: oklch(0.13 0 0);
+  --destructive: oklch(0.58 0.24 27);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.92 0.005 260);
+  --input: oklch(0.92 0.005 260);
+  --ring: oklch(0.55 0.22 260);
+  --bubble-user: oklch(0.96 0.005 260);
+  --bubble-assistant: oklch(1 0 0);
+  --bubble-assistant-border: oklch(0.92 0.005 260);
+  --nav-bg: oklch(1 0 0);
+  --nav-active: oklch(0.55 0.22 260);
+  --nav-inactive: oklch(0.55 0 0);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3 {
+    font-weight: 600;
+    line-height: 1.2;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+/* Blinking cursor for streaming text */
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink-cursor 1s ease-in-out infinite;
+}
+
+/* Sound wave bars for speaking state */
+@keyframes sound-bar {
+  0%, 100% { transform: scaleY(0.35); }
+  50%       { transform: scaleY(1); }
+}
+
+.animate-sound-bar-1 {
+  animation: sound-bar 0.65s ease-in-out infinite;
+  animation-delay: 0ms;
+}
+
+.animate-sound-bar-2 {
+  animation: sound-bar 0.65s ease-in-out infinite;
+  animation-delay: 130ms;
+}
+
+.animate-sound-bar-3 {
+  animation: sound-bar 0.65s ease-in-out infinite;
+  animation-delay: 260ms;
+}
+
+/* Recording progress bar shimmer */
+@keyframes waveform {
+  0%   { width: 5%;   opacity: 0.7; }
+  50%  { width: 90%;  opacity: 1; }
+  100% { width: 5%;   opacity: 0.7; }
+}
+
+.animate-waveform {
+  animation: waveform 1.8s ease-in-out infinite;
+}
